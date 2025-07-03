@@ -2,6 +2,14 @@ from flask import Flask, request, jsonify
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
+from dotenv import load_dotenv
+import google.generativeai as genai
+
+# ✅ Load environment variables
+load_dotenv()
+
+# ✅ Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 
@@ -24,9 +32,20 @@ def analyze():
         desc = data.get("description", "No details")
         report_id = data.get("id", "unknown")
 
-        summary = f"Event at {location}: {desc}"
-        print("Summary generated:", summary)  # 🐞 Debug print
+        # 🧠 Ask Gemini for incident analysis
+        prompt = f"""
+        You are a smart city AI assistant. Summarize and give insights about the following issue:
+        Location: {location}
+        Description: {desc}
+        """
 
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(prompt)
+        summary = response.text.strip()
+
+        print("Summary from Gemini:", summary)
+
+        # ✅ Store in Firestore
         db.collection("reports").document(report_id).set({
             "summary": summary,
             "status": "analyzed"
@@ -35,15 +54,15 @@ def analyze():
         return jsonify({"status": "success", "summary": summary})
 
     except Exception as e:
-        print("❌ ERROR:", e)  # 🐞 Print actual error to terminal
+        print("❌ ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
-# ✅ Add health check route for Render monitoring
+# ✅ Health check for Render monitoring
 @app.route("/healthz", methods=["GET"])
 def health():
     return jsonify({"status": "ok"}), 200
 
-# ✅ Use Render's PORT environment variable
+# ✅ Run server with Render port
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
