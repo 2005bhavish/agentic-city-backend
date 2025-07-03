@@ -14,7 +14,9 @@ genai.configure(api_key=os.getenv("AIzaSyAaDsFsrCuHe8bIdyoc3TqJScEID93l0Ag"))
 app = Flask(__name__)
 
 # ✅ Initialize Firebase Admin with Render's secret file path
-cred = credentials.Certificate("firebase-service-account.json")
+cred_path = os.environ.get("FIREBASE_CREDENTIAL_PATH")
+cred = credentials.Certificate(cred_path)
+
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
