@@ -9,7 +9,7 @@ import google.generativeai as genai
 load_dotenv()
 
 # ✅ Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv("AIzaSyAaDsFsrCuHe8bIdyoc3TqJScEID93l0Ag"))
 
 app = Flask(__name__)
 
