@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # ✅ Initialize Firebase Admin with Render's secret file path
-cred = credentials.Certificate("/etc/secrets/firebase-service-account.json")
+cred = credentials.Certificate("firebase-service-account.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
@@ -16,20 +16,27 @@ def home():
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    data = request.json
-    location = data.get("location", "Unknown")
-    desc = data.get("description", "No details")
-    report_id = data.get("id", "unknown")
+    try:
+        data = request.json
+        print("Received data:", data)  # 🐞 Debug print
 
-    # 🔮 Gemini integration will go here
-    summary = f"Event at {location}: {desc}"
+        location = data.get("location", "Unknown")
+        desc = data.get("description", "No details")
+        report_id = data.get("id", "unknown")
 
-    db.collection("reports").document(report_id).set({
-        "summary": summary,
-        "status": "analyzed"
-    }, merge=True)
+        summary = f"Event at {location}: {desc}"
+        print("Summary generated:", summary)  # 🐞 Debug print
 
-    return jsonify({"status": "success", "summary": summary})
+        db.collection("reports").document(report_id).set({
+            "summary": summary,
+            "status": "analyzed"
+        }, merge=True)
+
+        return jsonify({"status": "success", "summary": summary})
+
+    except Exception as e:
+        print("❌ ERROR:", e)  # 🐞 Print actual error to terminal
+        return jsonify({"error": str(e)}), 500
 
 # ✅ Add health check route for Render monitoring
 @app.route("/healthz", methods=["GET"])
